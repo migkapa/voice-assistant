@@ -1,3 +1,5 @@
+import { sessionUpdate, handleFunctionCall } from './tools'
+
 let isListening = false
 let peerConnection: RTCPeerConnection | null = null
 let dataChannel: RTCDataChannel | null = null
@@ -10,34 +12,89 @@ async function initialize() {
       throw new Error('OpenAI API key not found')
     }
 
-    // Create a peer connection
-    peerConnection = new RTCPeerConnection()
+    // Create a peer connection with STUN servers
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: 'stun:stun.l.google.com:19302'
+        }
+      ]
+    })
+    peerConnection = pc
 
     // Set up audio elements
     const audioEl = document.createElement('audio')
     audioEl.autoplay = true
-    peerConnection.ontrack = (e) => {
+    pc.ontrack = (e) => {
       audioEl.srcObject = e.streams[0]
     }
 
     // Add local audio track for microphone input
     const mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: true
-    })
-    peerConnection.addTrack(mediaStream.getTracks()[0])
-
-    // Set up data channel for sending and receiving events
-    dataChannel = peerConnection.createDataChannel('oai-events')
-    dataChannel.addEventListener('message', (event) => {
-      const data = JSON.parse(event.data)
-      if (data.type === 'transcription') {
-        handleVoiceCommand(data.text)
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
       }
     })
+    mediaStream.getTracks().forEach(track => {
+      pc.addTrack(track, mediaStream)
+    })
+
+    // Set up data channel for sending and receiving events
+    dataChannel = pc.createDataChannel('oai-events', {
+      ordered: true
+    })
+
+    // Handle data channel events
+    dataChannel.onopen = () => {
+      console.log('Data channel opened')
+      if (dataChannel) {
+        // Register tools
+        dataChannel.send(JSON.stringify(sessionUpdate))
+
+        // Set up initial instructions
+        const responseCreate = {
+          type: 'response.create',
+          response: {
+            modalities: ['text'],
+            instructions: `
+              I am a voice navigation assistant. I can help you navigate web pages using voice commands.
+              Available commands:
+              - Scroll to top/bottom
+              - Scroll up/down
+              - Click on elements by their text
+              I will execute your commands and provide feedback.
+            `,
+          },
+        }
+        dataChannel.send(JSON.stringify(responseCreate))
+      }
+    }
+
+    dataChannel.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      handleRealtimeEvent(data)
+    }
+
+    dataChannel.onerror = (error) => {
+      console.error('Data channel error:', error)
+    }
+
+    // Handle connection state changes
+    pc.onconnectionstatechange = () => {
+      console.log('Connection state:', pc.connectionState)
+    }
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', pc.iceConnectionState)
+    }
 
     // Start the session using SDP
-    const offer = await peerConnection.createOffer()
-    await peerConnection.setLocalDescription(offer)
+    const offer = await pc.createOffer({
+      offerToReceiveAudio: true
+    })
+    await pc.setLocalDescription(offer)
 
     const baseUrl = 'https://api.openai.com/v1/realtime'
     const model = 'gpt-4o-realtime-preview-2024-12-17'
@@ -50,34 +107,47 @@ async function initialize() {
       },
     })
 
+    if (!sdpResponse.ok) {
+      throw new Error(`OpenAI API error: ${sdpResponse.status} ${sdpResponse.statusText}`)
+    }
+
     const sdpAnswer = await sdpResponse.text()
-    await peerConnection.setRemoteDescription(new RTCSessionDescription({
+    await pc.setRemoteDescription(new RTCSessionDescription({
       type: 'answer',
       sdp: sdpAnswer
     }))
 
-    // Send initial configuration
-    if (dataChannel) {
-      const responseCreate = {
-        type: 'response.create',
-        response: {
-          modalities: ['text'],
-          instructions: 'Listen for voice commands and transcribe them',
-        },
-      }
-      dataChannel.send(JSON.stringify(responseCreate))
-    }
-
   } catch (error) {
     console.error('Initialization error:', error)
     isListening = false
+    cleanup() // Clean up on error
   }
 }
 
-// Handle voice commands
-function handleVoiceCommand(command: string) {
-  console.log('Received command:', command)
-  // Add command handling logic here
+// Handle Realtime API events
+function handleRealtimeEvent(event: any) {
+  if (event.type === 'response.output') {
+    event.output.forEach((output: any) => {
+      if (output.type === 'function_call') {
+        try {
+          const result = handleFunctionCall(output)
+          console.log('Function call result:', result)
+          
+          // Send confirmation back to the model
+          if (dataChannel && dataChannel.readyState === 'open') {
+            dataChannel.send(JSON.stringify({
+              type: 'response.create',
+              response: {
+                instructions: `Command executed: ${result}. What else would you like me to do?`,
+              },
+            }))
+          }
+        } catch (error) {
+          console.error('Error executing function:', error)
+        }
+      }
+    })
+  }
 }
 
 // Clean up WebRTC connection
