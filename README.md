@@ -1,6 +1,6 @@
 # Voice Assistant - Chrome Extension
 
-A powerful Chrome extension that enables voice-controlled web navigation and page customization using OpenAI's latest voice models.
+A cool Chrome extension that lets you navigate the web and customize pages with your voice, thanks to OpenAI's latest voice models.
 
 ## Features
 
