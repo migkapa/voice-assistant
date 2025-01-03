@@ -2,6 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { crx } from '@crxjs/vite-plugin'
 import { defineManifest } from '@crxjs/vite-plugin'
+import { Buffer } from 'buffer'
+import process from 'process'
+
+// Polyfill ReadableStream
+if (typeof globalThis.ReadableStream === 'undefined') {
+  const { ReadableStream } = require('stream/web')
+  globalThis.ReadableStream = ReadableStream
+}
 
 const manifest = defineManifest({
   manifest_version: 3,
@@ -51,6 +59,23 @@ export default defineConfig({
     react(),
     crx({ manifest })
   ],
+  define: {
+    'process.env': process.env,
+    'global': {},
+  },
+  resolve: {
+    alias: {
+      stream: 'stream-browserify',
+      buffer: 'buffer',
+    },
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,
@@ -61,6 +86,11 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   }
 })

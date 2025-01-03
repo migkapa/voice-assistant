@@ -8,7 +8,24 @@ function Popup() {
 
   const toggleVoice = () => {
     setStatus(status === 'inactive' ? 'active' : 'inactive')
-    // TODO: Implement actual voice toggle logic
+    // Send message to content script
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0]
+      if (activeTab?.id) {
+        const action = status === 'inactive' ? 'startListening' : 'stopListening'
+        chrome.tabs.sendMessage(activeTab.id, { action }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError)
+            return
+          }
+          if (response?.status === 'started') {
+            setLastCommand('Listening started...')
+          } else if (response?.status === 'stopped') {
+            setLastCommand('Listening stopped.')
+          }
+        })
+      }
+    })
   }
 
   return (
