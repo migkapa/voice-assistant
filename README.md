@@ -13,8 +13,24 @@ A cool Chrome extension that lets you navigate the web and customize pages with 
 ## Prerequisites
 
 - Node.js 18 or higher
-- Chrome browser
-- OpenAI API key
+- Chrome browser (version 88 or later)
+- OpenAI API key with access to:
+  - Voice models
+  - WebRTC capabilities
+  - Real-time audio streaming
+
+
+## Important: OpenAI API Key Setup
+
+This extension requires an OpenAI API key to function. After installation:
+1. Right-click the extension icon in Chrome
+2. Select "Options" from the menu
+3. Enter your OpenAI API key in the provided field
+4. Click "Save"
+
+**Note**: Your API key is stored securely in Chrome's local storage and is never shared.
+
+You can obtain an OpenAI API key from your [OpenAI account dashboard](https://platform.openai.com/api-keys). Make sure your account has sufficient credits for voice model usage.
 
 ## Installation
 
@@ -39,10 +55,14 @@ npm run build
    - Enable "Developer mode" in the top right
    - Click "Load unpacked" and select the `dist` directory
 
-5. Configure the extension:
-   - Click the extension icon in Chrome
-   - Open the options page
+5. **Configure your OpenAI API key** (required):
+   - Right-click the extension icon in Chrome's toolbar
+   - Select "Options" from the menu
    - Enter your OpenAI API key
+   - Click "Save"
+   - The extension icon should turn green when properly configured
+
+**Note**: The extension will not function without a valid OpenAI API key. If you see any initialization errors, double-check your API key in the options page.
 
 ## Usage
 
