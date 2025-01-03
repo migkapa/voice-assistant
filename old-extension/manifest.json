@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Voice Navigation Assistant",
+  "version": "1.0.1",
+  "description": "Navigate websites using voice commands with OpenAI's Realtime API",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://api.openai.com;"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon128.png"
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [{
+    "resources": ["content.js"],
+    "matches": ["<all_urls>"]
+  }]
+} 
