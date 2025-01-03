@@ -52,71 +52,50 @@ export const navigationTools = [
 // Tool implementations
 export const navigationActions = {
   scroll_page: ({ direction, smooth = true }: { direction: string; smooth?: boolean }) => {
-    console.log('Executing scroll_page with:', { direction, smooth })
     const behavior = smooth ? 'smooth' : 'auto'
     
     try {
       switch (direction) {
         case 'top':
-          console.log('Scrolling to top')
           window.scrollTo({ top: 0, behavior })
           break
         case 'bottom':
-          console.log('Scrolling to bottom')
           window.scrollTo({ top: document.body.scrollHeight, behavior })
           break
         case 'up':
-          console.log('Scrolling up by 300px')
           window.scrollBy({ top: -300, behavior })
           break
         case 'down':
-          console.log('Scrolling down by 300px')
           window.scrollBy({ top: 300, behavior })
           break
         default:
-          console.error('Invalid scroll direction:', direction)
           return `Error: Invalid scroll direction "${direction}"`
       }
       
-      console.log('Scroll completed successfully')
       return `Scrolled page ${direction}`
     } catch (error) {
-      console.error('Error during scroll:', error)
       return `Error scrolling: ${error}`
     }
   },
 
   click_element: ({ text }: { text: string }) => {
-    console.log('Executing click_element with text:', text)
-    
     try {
       // Find all elements that contain the text
       const elements = Array.from(document.querySelectorAll('a, button, [role="button"], input[type="submit"]'))
-      console.log('Found elements:', elements.length)
-      
       const matchingElements = elements.filter(el => {
         const content = el.textContent?.toLowerCase() || ''
-        const matches = content.includes(text.toLowerCase())
-        console.log('Element:', el, 'Content:', content, 'Matches:', matches)
-        return matches
+        return content.includes(text.toLowerCase())
       })
-      
-      console.log('Matching elements:', matchingElements.length)
 
       if (matchingElements.length === 0) {
-        console.warn('No matching elements found')
         return `No clickable elements found containing text "${text}"`
       }
 
       // Click the first matching element
       const element = matchingElements[0] as HTMLElement
-      console.log('Clicking element:', element)
       element.click()
-      
-      console.log('Click completed successfully')
       return `Clicked element containing "${text}"`
     } catch (error) {
-      console.error('Error during click:', error)
       return `Error clicking: ${error}`
     }
   },

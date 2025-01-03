@@ -7,11 +7,8 @@ let toolsRegistered = false
 
 // Handle Realtime API events
 function handleRealtimeEvent(event: any) {
-  console.log('Received event:', event)
-
   // Handle session creation - register tools
   if (event.type === 'session.created' && !toolsRegistered && dataChannel) {
-    console.log('Session created, registering tools')
     dataChannel.send(JSON.stringify(sessionUpdate))
     toolsRegistered = true
     return
@@ -20,12 +17,10 @@ function handleRealtimeEvent(event: any) {
   // Handle completed function calls
   if (event.type === 'response.function_call_arguments.done') {
     try {
-      console.log('Executing function call:', event.name, 'with arguments:', event.arguments)
       const result = handleFunctionCall({
         name: event.name,
         arguments: event.arguments
       })
-      console.log('Function call result:', result)
       
       // Send confirmation back to the model
       if (dataChannel && dataChannel.readyState === 'open') {
@@ -34,7 +29,7 @@ function handleRealtimeEvent(event: any) {
         )))
       }
     } catch (error: any) {
-      console.error('Error executing function:', error)
+      console.error('Function execution error:', error.message || 'Unknown error')
       if (dataChannel && dataChannel.readyState === 'open') {
         dataChannel.send(JSON.stringify(createResponse(
           `Sorry, there was an error executing the command: ${error.message || 'Unknown error'}`
@@ -50,7 +45,6 @@ function handleRealtimeEvent(event: any) {
       if (output.type === 'function_call') {
         try {
           const result = handleFunctionCall(output)
-          console.log('Function call result:', result)
           
           // Send confirmation back to the model
           if (dataChannel && dataChannel.readyState === 'open') {
@@ -59,7 +53,7 @@ function handleRealtimeEvent(event: any) {
             )))
           }
         } catch (error: any) {
-          console.error('Error executing function:', error)
+          console.error('Function execution error:', error.message || 'Unknown error')
           if (dataChannel && dataChannel.readyState === 'open') {
             dataChannel.send(JSON.stringify(createResponse(
               `Sorry, there was an error executing the command: ${error.message || 'Unknown error'}`
@@ -115,7 +109,6 @@ async function initialize() {
 
     // Handle data channel events
     dataChannel.onopen = () => {
-      console.log('Data channel opened')
       if (dataChannel) {
         // Set up initial instructions
         dataChannel.send(JSON.stringify(createResponse(`
@@ -136,15 +129,6 @@ async function initialize() {
 
     dataChannel.onerror = (error) => {
       console.error('Data channel error:', error)
-    }
-
-    // Handle connection state changes
-    pc.onconnectionstatechange = () => {
-      console.log('Connection state:', pc.connectionState)
-    }
-
-    pc.oniceconnectionstatechange = () => {
-      console.log('ICE connection state:', pc.iceConnectionState)
     }
 
     // Start the session using SDP
