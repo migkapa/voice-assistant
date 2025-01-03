@@ -7,23 +7,43 @@ function Popup() {
   const [lastCommand, setLastCommand] = useState<string>('None')
 
   const toggleVoice = () => {
-    setStatus(status === 'inactive' ? 'active' : 'inactive')
+    console.log('Toggle voice called, current status:', status)
+    const newStatus = status === 'inactive' ? 'active' : 'inactive'
+    setStatus(newStatus)
+    console.log('New status will be:', newStatus)
+
     // Send message to content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0]
+      console.log('Active tab:', activeTab)
+
       if (activeTab?.id) {
         const action = status === 'inactive' ? 'startListening' : 'stopListening'
+        console.log('Sending message to content script:', action)
+
         chrome.tabs.sendMessage(activeTab.id, { action }, (response) => {
+          console.log('Received response from content script:', response)
+          
           if (chrome.runtime.lastError) {
-            console.error(chrome.runtime.lastError)
+            console.error('Chrome runtime error:', chrome.runtime.lastError)
+            setLastCommand(`Error: ${chrome.runtime.lastError.message}`)
             return
           }
+
           if (response?.status === 'started') {
+            console.log('Voice navigation started')
             setLastCommand('Listening started...')
           } else if (response?.status === 'stopped') {
+            console.log('Voice navigation stopped')
             setLastCommand('Listening stopped.')
+          } else {
+            console.warn('Unexpected response:', response)
+            setLastCommand('Unexpected response from content script')
           }
         })
+      } else {
+        console.error('No active tab found')
+        setLastCommand('Error: No active tab found')
       }
     })
   }
@@ -66,12 +86,14 @@ function Popup() {
   )
 }
 
-// Make sure the DOM is fully loaded before rendering
-const root = document.getElementById('root')
-if (root) {
-  createRoot(root).render(
-    <React.StrictMode>
-      <Popup />
-    </React.StrictMode>
-  )
-} 
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+  const root = document.getElementById('root')
+  if (root) {
+    createRoot(root).render(
+      <React.StrictMode>
+        <Popup />
+      </React.StrictMode>
+    )
+  }
+}) 

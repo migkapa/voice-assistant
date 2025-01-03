@@ -27,17 +27,32 @@ export const sessionUpdate = {
 
 // Handle function calls from the model
 export function handleFunctionCall(functionCall: { name: string; arguments: string }) {
+  console.log('Handling function call:', functionCall)
+
   const action = toolActions[functionCall.name]
   if (!action) {
+    console.error('Unknown function:', functionCall.name)
+    console.log('Available functions:', Object.keys(toolActions))
     throw new Error(`Unknown function: ${functionCall.name}`)
   }
 
   try {
+    console.log('Parsing arguments:', functionCall.arguments)
     const args = JSON.parse(functionCall.arguments)
+    console.log('Parsed arguments:', args)
+
+    console.log('Executing function:', functionCall.name)
     const result = action(args)
+    console.log('Function result:', result)
+
     return result
   } catch (error) {
     console.error('Error executing function:', error)
+    console.error('Function call details:', {
+      name: functionCall.name,
+      arguments: functionCall.arguments,
+      availableFunctions: Object.keys(toolActions)
+    })
     throw error
   }
 }

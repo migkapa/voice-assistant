@@ -1,8 +1,75 @@
-import { sessionUpdate, handleFunctionCall } from './tools'
+import { sessionUpdate, handleFunctionCall, createResponse } from './tools'
 
 let isListening = false
 let peerConnection: RTCPeerConnection | null = null
 let dataChannel: RTCDataChannel | null = null
+let toolsRegistered = false
+
+// Handle Realtime API events
+function handleRealtimeEvent(event: any) {
+  console.log('Received event:', event)
+
+  // Handle session creation - register tools
+  if (event.type === 'session.created' && !toolsRegistered && dataChannel) {
+    console.log('Session created, registering tools')
+    dataChannel.send(JSON.stringify(sessionUpdate))
+    toolsRegistered = true
+    return
+  }
+
+  // Handle completed function calls
+  if (event.type === 'response.function_call_arguments.done') {
+    try {
+      console.log('Executing function call:', event.name, 'with arguments:', event.arguments)
+      const result = handleFunctionCall({
+        name: event.name,
+        arguments: event.arguments
+      })
+      console.log('Function call result:', result)
+      
+      // Send confirmation back to the model
+      if (dataChannel && dataChannel.readyState === 'open') {
+        dataChannel.send(JSON.stringify(createResponse(
+          `Command executed: ${result}. What else would you like me to do?`
+        )))
+      }
+    } catch (error: any) {
+      console.error('Error executing function:', error)
+      if (dataChannel && dataChannel.readyState === 'open') {
+        dataChannel.send(JSON.stringify(createResponse(
+          `Sorry, there was an error executing the command: ${error.message || 'Unknown error'}`
+        )))
+      }
+    }
+    return
+  }
+
+  // Handle response output (for backward compatibility)
+  if (event.type === 'response.output' && event.output) {
+    event.output.forEach((output: any) => {
+      if (output.type === 'function_call') {
+        try {
+          const result = handleFunctionCall(output)
+          console.log('Function call result:', result)
+          
+          // Send confirmation back to the model
+          if (dataChannel && dataChannel.readyState === 'open') {
+            dataChannel.send(JSON.stringify(createResponse(
+              `Command executed: ${result}. What else would you like me to do?`
+            )))
+          }
+        } catch (error: any) {
+          console.error('Error executing function:', error)
+          if (dataChannel && dataChannel.readyState === 'open') {
+            dataChannel.send(JSON.stringify(createResponse(
+              `Sorry, there was an error executing the command: ${error.message || 'Unknown error'}`
+            )))
+          }
+        }
+      }
+    })
+  }
+}
 
 // Initialize WebRTC connection
 async function initialize() {
@@ -50,25 +117,15 @@ async function initialize() {
     dataChannel.onopen = () => {
       console.log('Data channel opened')
       if (dataChannel) {
-        // Register tools
-        dataChannel.send(JSON.stringify(sessionUpdate))
-
         // Set up initial instructions
-        const responseCreate = {
-          type: 'response.create',
-          response: {
-            modalities: ['text'],
-            instructions: `
-              I am a voice navigation assistant. I can help you navigate web pages using voice commands.
-              Available commands:
-              - Scroll to top/bottom
-              - Scroll up/down
-              - Click on elements by their text
-              I will execute your commands and provide feedback.
-            `,
-          },
-        }
-        dataChannel.send(JSON.stringify(responseCreate))
+        dataChannel.send(JSON.stringify(createResponse(`
+          I am a voice navigation assistant. I can help you navigate web pages using voice commands.
+          Available commands:
+          - Scroll to top/bottom
+          - Scroll up/down
+          - Click on elements by their text
+          I will execute your commands and provide feedback.
+        `)))
       }
     }
 
@@ -124,34 +181,9 @@ async function initialize() {
   }
 }
 
-// Handle Realtime API events
-function handleRealtimeEvent(event: any) {
-  if (event.type === 'response.output') {
-    event.output.forEach((output: any) => {
-      if (output.type === 'function_call') {
-        try {
-          const result = handleFunctionCall(output)
-          console.log('Function call result:', result)
-          
-          // Send confirmation back to the model
-          if (dataChannel && dataChannel.readyState === 'open') {
-            dataChannel.send(JSON.stringify({
-              type: 'response.create',
-              response: {
-                instructions: `Command executed: ${result}. What else would you like me to do?`,
-              },
-            }))
-          }
-        } catch (error) {
-          console.error('Error executing function:', error)
-        }
-      }
-    })
-  }
-}
-
 // Clean up WebRTC connection
 function cleanup() {
+  toolsRegistered = false
   if (dataChannel) {
     dataChannel.close()
     dataChannel = null
