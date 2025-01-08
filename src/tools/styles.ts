@@ -1,6 +1,10 @@
 // Tool function descriptions
 const injectCssDescription = `
-Call this function to modify the page's appearance using CSS. You can change colors, sizes, layouts, etc.
+Call this function to inject any CSS styles into the page. You can modify any element's appearance using standard CSS.
+Examples:
+- "Make the background dark" -> inject_css({ selector: "body", css: "background-color: #1a1a1a; color: #ffffff;" })
+- "Increase text size" -> inject_css({ selector: "p, h1, h2, h3", css: "font-size: 1.2em;" })
+- "Add custom styles" -> inject_css({ selector: ".my-class", css: "border: 2px solid red; padding: 10px;" })
 `
 
 // Tool definitions
@@ -11,52 +15,24 @@ export const styleTools = [
     description: injectCssDescription,
     parameters: {
       type: 'object',
-      strict: true,
       properties: {
         selector: {
           type: 'string',
-          description: 'CSS selector to target elements (e.g., "body", ".class-name", "#id")',
+          description: 'CSS selector to target elements (e.g., "body", ".class-name", "#id", "p, h1")',
         },
-        properties: {
-          type: 'object',
-          description: 'CSS properties to apply',
-          properties: {
-            backgroundColor: { type: 'string', description: 'Background color (e.g., "#fff", "red")' },
-            color: { type: 'string', description: 'Text color' },
-            fontSize: { type: 'string', description: 'Font size (e.g., "16px", "1.2em")' },
-            padding: { type: 'string', description: 'Padding (e.g., "10px", "1em")' },
-            margin: { type: 'string', description: 'Margin' },
-            width: { type: 'string', description: 'Width' },
-            height: { type: 'string', description: 'Height' },
-            display: { type: 'string', description: 'Display property' },
-            position: { type: 'string', description: 'Position property' },
-            border: { type: 'string', description: 'Border property' },
-            borderRadius: { type: 'string', description: 'Border radius' },
-            boxShadow: { type: 'string', description: 'Box shadow' },
-            opacity: { type: 'string', description: 'Opacity (0-1)' },
-            transform: { type: 'string', description: 'Transform property' },
-            transition: { type: 'string', description: 'Transition property' },
-          },
-          additionalProperties: true,
-        },
-        important: {
-          type: 'boolean',
-          description: 'Whether to add !important to all properties',
-          default: false,
+        css: {
+          type: 'string',
+          description: 'CSS rules to apply (e.g., "color: red; font-size: 16px;")',
         },
       },
-      required: ['selector', 'properties'],
+      required: ['selector', 'css'],
     },
   },
 ]
 
 // Tool implementations
 export const styleActions = {
-  inject_css: ({ selector, properties, important = false }: { 
-    selector: string; 
-    properties: Record<string, string>;
-    important?: boolean;
-  }) => {
+  inject_css: ({ selector, css }: { selector: string; css: string }) => {
     try {
       // Create a unique ID for this style
       const styleId = `injected-style-${Math.random().toString(36).substr(2, 9)}`
@@ -67,23 +43,50 @@ export const styleActions = {
         existingStyle.remove()
       }
 
-      // Convert properties object to CSS string
-      const cssProperties = Object.entries(properties)
-        .map(([key, value]) => {
-          // Convert camelCase to kebab-case
-          const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase()
-          return `${cssKey}: ${value}${important ? ' !important' : ''};`
+      // Process the CSS to add !important to each property
+      const processedCss = css
+        .split(';')
+        .filter(rule => rule.trim())
+        .map(rule => {
+          const trimmedRule = rule.trim()
+          return trimmedRule.endsWith('!important') 
+            ? trimmedRule 
+            : `${trimmedRule} !important`
         })
-        .join(' ')
+        .join('; ')
 
       // Create and inject the style element
       const style = document.createElement('style')
       style.id = styleId
-      style.textContent = `${selector} { ${cssProperties} }`
+
+      // Process selectors to increase specificity without duplication
+      const processedSelector = selector
+        .split(',')
+        .map(s => {
+          const trimmed = s.trim()
+          // If it's already a body selector, just add :not(#_)
+          if (trimmed === 'body') {
+            return 'body:not(#_)'
+          }
+          // For other selectors, add :not(#_) to increase specificity
+          return `${trimmed}:not(#_)`
+        })
+        .join(', ')
+      
+      style.textContent = `${processedSelector} { ${processedCss} }`
+      
+      // Insert at the end of head to override other styles
       document.head.appendChild(style)
 
-      return `Applied CSS to "${selector}": ${cssProperties}`
+      console.log('Injected CSS:', {
+        id: styleId,
+        selector: processedSelector,
+        css: processedCss
+      })
+
+      return `Applied CSS to "${selector}": ${processedCss}`
     } catch (error) {
+      console.error('CSS injection error:', error)
       return `Error applying CSS: ${error}`
     }
   },
