@@ -43,14 +43,50 @@ export const styleActions = {
         existingStyle.remove()
       }
 
+      // Process the CSS to add !important to each property
+      const processedCss = css
+        .split(';')
+        .filter(rule => rule.trim())
+        .map(rule => {
+          const trimmedRule = rule.trim()
+          return trimmedRule.endsWith('!important') 
+            ? trimmedRule 
+            : `${trimmedRule} !important`
+        })
+        .join('; ')
+
       // Create and inject the style element
       const style = document.createElement('style')
       style.id = styleId
-      style.textContent = `${selector} { ${css} }`
+
+      // Process selectors to increase specificity without duplication
+      const processedSelector = selector
+        .split(',')
+        .map(s => {
+          const trimmed = s.trim()
+          // If it's already a body selector, just add :not(#_)
+          if (trimmed === 'body') {
+            return 'body:not(#_)'
+          }
+          // For other selectors, add :not(#_) to increase specificity
+          return `${trimmed}:not(#_)`
+        })
+        .join(', ')
+      
+      style.textContent = `${processedSelector} { ${processedCss} }`
+      
+      // Insert at the end of head to override other styles
       document.head.appendChild(style)
 
-      return `Applied CSS to "${selector}": ${css}`
+      console.log('Injected CSS:', {
+        id: styleId,
+        selector: processedSelector,
+        css: processedCss
+      })
+
+      return `Applied CSS to "${selector}": ${processedCss}`
     } catch (error) {
+      console.error('CSS injection error:', error)
       return `Error applying CSS: ${error}`
     }
   },
