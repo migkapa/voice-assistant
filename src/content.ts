@@ -107,18 +107,34 @@ async function initialize() {
       ordered: true
     })
 
+    // Make data channel available to tools
+    window.__VOICE_NAVIGATION_DATA_CHANNEL__ = dataChannel
+
     // Handle data channel events
     dataChannel.onopen = () => {
+      console.log('Data channel opened')
       if (dataChannel) {
-        // Set up initial instructions
-        dataChannel.send(JSON.stringify(createResponse(`
-          I am a voice navigation assistant. I can help you navigate web pages using voice commands.
-          Available commands:
-          - Scroll to top/bottom
-          - Scroll up/down
-          - Click on elements by their text
-          I will execute your commands and provide feedback.
-        `)))
+        // Set up initial instructions and register tools
+        dataChannel.send(JSON.stringify(sessionUpdate))
+        
+        // Configure voice response
+        const voiceConfig = {
+          type: "response.create",
+          response: {
+            modalities: ["text", "voice"],
+            voice: "alloy",
+            instructions: `
+              I am a voice navigation assistant. I can help you navigate web pages using voice commands.
+              Available commands:
+              - "Scroll to top" or "Scroll to bottom"
+              - "Scroll up" or "Scroll down"
+              - "Make background dark" or "Increase font size"
+              - "Read the page content" or "Summarize this page"
+              I will execute your commands and provide feedback.
+            `
+          }
+        }
+        dataChannel.send(JSON.stringify(voiceConfig))
       }
     }
 

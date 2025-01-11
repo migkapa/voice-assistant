@@ -1,5 +1,6 @@
 import { navigationTools, navigationActions } from './navigation'
 import { styleTools, styleActions } from './styles'
+import { webTools, webActions } from './web'
 
 // Define types for our tools system
 type ToolFunction = (...args: any[]) => string
@@ -9,14 +10,14 @@ type ToolActions = { [key: string]: ToolFunction }
 export const allTools = [
   ...navigationTools,
   ...styleTools,
-  // Add more tool arrays here as we create them
+  ...webTools,
 ]
 
 // Combine all tool implementations
 export const toolActions: ToolActions = {
   ...navigationActions,
   ...styleActions,
-  // Add more action objects here as we create them
+  ...webActions,
 }
 
 // Session update message for the Realtime API
