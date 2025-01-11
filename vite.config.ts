@@ -4,6 +4,8 @@ import { crx } from '@crxjs/vite-plugin'
 import { defineManifest } from '@crxjs/vite-plugin'
 import { Buffer } from 'buffer'
 import process from 'process'
+import tailwindcss from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
 
 // Polyfill ReadableStream
 if (typeof globalThis.ReadableStream === 'undefined') {
@@ -59,6 +61,14 @@ export default defineConfig({
     react(),
     crx({ manifest })
   ],
+  css: {
+    postcss: {
+      plugins: [
+        tailwindcss,
+        autoprefixer,
+      ],
+    },
+  },
   define: {
     'process.env': process.env,
     'global': {},
@@ -88,6 +98,10 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
+      input: {
+        popup: 'src/popup.html',
+        options: 'src/options.html',
+      },
       output: {
         manualChunks: undefined,
       },

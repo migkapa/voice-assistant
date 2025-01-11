@@ -14,7 +14,7 @@ function Popup() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0]
       if (activeTab?.id) {
-        const action = status === 'inactive' ? 'startListening' : 'stopListening'
+        const action = newStatus === 'active' ? 'startListening' : 'stopListening'
         chrome.tabs.sendMessage(activeTab.id, { action }, (response) => {
           if (chrome.runtime.lastError) {
             setLastCommand(`Error: ${chrome.runtime.lastError.message}`)
@@ -74,13 +74,22 @@ function Popup() {
 }
 
 // Wait for DOM to be ready
-document.addEventListener('DOMContentLoaded', () => {
+const init = () => {
   const root = document.getElementById('root')
   if (root) {
+    console.log('Initializing popup...')
     createRoot(root).render(
       <React.StrictMode>
         <Popup />
       </React.StrictMode>
     )
+  } else {
+    console.error('Root element not found')
   }
-}) 
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init)
+} else {
+  init()
+} 
