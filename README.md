@@ -1,43 +1,28 @@
-# Voice Assistant - Chrome Extension
+# Voice Assistant Chrome Extension
 
-A cool Chrome extension that lets you navigate the web and customize pages with your voice, thanks to OpenAI's latest voice models.
+A powerful Chrome extension that enables voice-controlled web navigation and content interaction using OpenAI's Realtime API and WebRTC.
 
 ## Features
 
-- 🎙️ Voice-controlled web navigation
+- 🎤 Voice-controlled navigation
 - 📜 Smart page scrolling
 - 🎨 Dynamic CSS customization
+- 📖 Page content reading and summarization
 - 🔊 Real-time voice feedback
-- ⚡ WebRTC-powered for low latency
+- 🌐 WebRTC integration for low-latency communication
 
 ## Prerequisites
 
 - Node.js 18 or higher
-- Chrome browser (version 88 or later)
-- OpenAI API key with access to:
-  - Voice models
-  - WebRTC capabilities
-  - Real-time audio streaming
-
-
-## Important: OpenAI API Key Setup
-
-This extension requires an OpenAI API key to function. After installation:
-1. Right-click the extension icon in Chrome
-2. Select "Options" from the menu
-3. Enter your OpenAI API key in the provided field
-4. Click "Save"
-
-**Note**: Your API key is stored securely in Chrome's local storage and is never shared.
-
-You can obtain an OpenAI API key from your [OpenAI account dashboard](https://platform.openai.com/api-keys). Make sure your account has sufficient credits for voice model usage.
+- Chrome browser
+- OpenAI API key
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/voice-assistant.git
-cd voice-assistant
+git clone [repository-url]
+cd voice-navigation-extension
 ```
 
 2. Install dependencies:
@@ -52,74 +37,64 @@ npm run build
 
 4. Load the extension in Chrome:
    - Open Chrome and navigate to `chrome://extensions/`
-   - Enable "Developer mode" in the top right
-   - Click "Load unpacked" and select the `dist` directory
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dist` folder from the project directory
 
-5. **Configure your OpenAI API key** (required):
-   - Right-click the extension icon in Chrome's toolbar
-   - Select "Options" from the menu
-   - Enter your OpenAI API key
-   - Click "Save"
-   - The extension icon should turn green when properly configured
+## Important: OpenAI API Key Setup
 
-**Note**: The extension will not function without a valid OpenAI API key. If you see any initialization errors, double-check your API key in the options page.
+1. Right-click the extension icon in Chrome
+2. Select "Options" from the menu
+3. Enter your OpenAI API key in the provided field
+4. Click "Save"
+
+Note: You can obtain an API key from [OpenAI's website](https://platform.openai.com/api-keys). Keep your API key secure and never share it publicly.
 
 ## Usage
 
 ### Voice Commands
 
-The extension supports various voice commands for navigation and page customization:
+- Navigation:
+  - "Scroll to top" or "Scroll to bottom"
+  - "Scroll up" or "Scroll down"
 
-#### Navigation Commands
-- "Scroll to bottom"
-- "Scroll to top"
-- "Scroll down"
-- "Scroll up"
-- "Scroll halfway"
+- Styling:
+  - "Make background dark"
+  - "Increase font size"
+  - "Change text color to [color]"
 
-#### Style Commands
-- "Make the background dark"
-- "Increase font size"
-- "Make text larger"
-- "Add dark mode"
-- "Make text more readable"
+- Content Reading:
+  - "Read the page content" - Reads the full page content
+  - "Summarize this page" - Provides a brief summary
 
-### Getting Started
-
-1. Click the extension icon to open the popup
-2. Click the microphone button to start voice recognition
-3. Speak your command naturally
-4. The extension will execute your command and provide voice feedback
-
-## Development
+### Development Commands
 
 ```bash
-# Install dependencies
-npm install
-
 # Start development server
 npm run dev
 
 # Build for production
 npm run build
+
+# Preview production build
+npm run preview
 ```
 
 ## Project Structure
 
 ```
-voice-assistant/
+voice-navigation-extension/
 ├── src/
-│   ├── tools/          # Navigation and styling tools
-│   │   ├── navigation.ts  # Scrolling and navigation commands
-│   │   ├── styles.ts     # CSS injection and styling tools
-│   │   └── index.ts      # Tools configuration
-│   ├── popup.tsx       # Extension popup UI
-│   ├── options.tsx     # Options page for API key
-│   ├── content.ts      # Content script with WebRTC
-│   └── background.ts   # Service worker
-├── public/             # Static assets
-│   └── icons/         # Extension icons
-└── dist/              # Built extension
+│   ├── tools/
+│   │   ├── navigation.ts    # Scrolling and navigation tools
+│   │   ├── styles.ts        # CSS injection tools
+│   │   ├── web.ts           # Content reading tools
+│   │   └── index.ts         # Tools registration
+│   ├── popup.tsx            # Extension popup UI
+│   ├── content.ts           # Content script
+│   └── options.tsx          # Options page
+├── public/                  # Static assets
+└── dist/                    # Built files
 ```
 
 ## Contributing
@@ -130,20 +105,11 @@ voice-assistant/
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Guidelines
-
-- Follow TypeScript best practices
-- Use Prettier for code formatting
-- Add JSDoc comments for new functions
-- Update tests for new features
-- Keep the code modular and maintainable
-
 ## Security
 
-- Never commit your OpenAI API key
-- Use environment variables for sensitive data
-- Follow Chrome Extension security best practices
-- Report security issues through GitHub issues
+- The extension requires an OpenAI API key which is stored securely in Chrome's storage
+- Voice data is processed using WebRTC for secure, real-time communication
+- No data is stored permanently; all processing happens in real-time
 
 ## License
 
@@ -151,7 +117,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- OpenAI for their voice models and WebRTC implementation
+- OpenAI for providing the Realtime API
 - Chrome Extensions API
-- React and Vite for the development environment
-- Contributors and the open-source community 
+- WebRTC for real-time communication
+- Turndown for HTML to Markdown conversion 
